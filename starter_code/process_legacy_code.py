@@ -11,9 +11,32 @@ def extract_logic_from_code(file_path):
         source_code = f.read()
     # ------------------------------------------
     
-    # TODO: Use the 'ast' module to find docstrings for functions
-    # TODO: (Optional/Advanced) Use regex to find business rules in comments like "# Business Logic Rule 001"
-    # TODO: Return a dictionary for the UnifiedDocument schema.
+    tree = ast.parse(source_code)
+    docstrings = []
     
-    return {}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.Module)):
+            ds = ast.get_docstring(node)
+            if ds:
+                name = getattr(node, 'name', 'Module')
+                docstrings.append(f"{name}: {ds}")
+                
+    content = "\n".join(docstrings)
+    
+    # Advanced: Extract comments starting with "# Business Logic Rule"
+    rules = []
+    for line in source_code.split('\n'):
+        if "# Business Logic Rule" in line:
+            rules.append(line.split("#")[-1].strip())
+    
+    return {
+        "document_id": "legacy-code-001",
+        "content": content,
+        "source_type": "Code",
+        "author": "Legacy System",
+        "source_metadata": {
+            "functions_found": len([d for d in docstrings if ':' in d]),
+            "business_rules": rules
+        }
+    }
 
